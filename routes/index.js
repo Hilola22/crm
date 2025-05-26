@@ -8,6 +8,7 @@ const roleRouter = require("./role.routes");
 const lidRouter = require("./lid.routes");
 const studentsRouter = require("./students.routes");
 const paymentRouter = require("./payment.routes");
+const otpRouter = require("./otp.routes");
 
 router.use("/stage", stageRouter);
 router.use("/status", statusRouter);
@@ -18,5 +19,6 @@ router.use("/role", roleRouter);
 router.use("/lid", lidRouter);
 router.use("/student", studentsRouter);
 router.use("/payment", paymentRouter);
+router.use("/otp", otpRouter);
 
 module.exports = router;
