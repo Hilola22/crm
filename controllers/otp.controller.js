@@ -4,10 +4,12 @@ const { sendErrorResponse } = require("../helpers/send.error.response");
 const { addMinutesToDate } = require("../helpers/add_minutes");
 const { encode, decode } = require("../helpers/crypt");
 const pool = require("../config/db");
+const mailService = require("../services/mail.service");
+const config = require('config');
 
 const newOtp = async (req, res) => {
   try {
-    const { phone_number } = req.body;
+    const { phone_number, email } = req.body;
 
     const otp = otpGenerator.generate(4, {
       digits: true,
@@ -26,8 +28,10 @@ const newOtp = async (req, res) => {
         `,
       [uuid.v4(), otp, expiration_time]
     );
+    
     //sms, bot, email
-
+    await mailService.sendMail(email, otp);
+    
     const details = {
       time: now,
       phone_number: phone_number,
@@ -78,7 +82,31 @@ const verifyOtp = async (req, res) => {
       `,
       [result.id, true]
     );
-    res.status(200).send({ message: "OTP verified!👍" });
+    const clientResult = await pool.query(
+      "SELECT * FROM client WHERE phone_number=$1",
+      [phone_number]
+    );
+    let client_id, isNew;
+    if (clientResult.rows.length == 0) {
+      const newClient = await pool.query(
+        `
+            INSERT INTO client (phone_number, is_active)
+            VALUES ($1, $2) returning id 
+            `,
+        [phone_number, true]
+      );
+
+      client_id = newClient.rows[0].id;
+      isNew = true;
+    } else {
+      client_id = clientResult.rows[0].id;
+      isNew = false;
+      await pool.query(`
+        UPDATE client SET is_active=true WHERE id=$1`,
+        [client_id]
+      );
+    }
+    res.status(200).send({ message: "OTP verified!👍", isNew, client_id });
   } catch (error) {
     sendErrorResponse(error, res);
   }
