@@ -10,6 +10,7 @@ app.use("/api", indexRouter)
 
 async function start() {
   try {
+    console.log(`Salom`);
     app.listen(PORT, () => {
       console.log(`Server started at: http://localhost:${PORT}`);
     });
